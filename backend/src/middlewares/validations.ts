@@ -1,7 +1,5 @@
 import { Joi, celebrate } from 'celebrate'
 import { Types } from 'mongoose'
-import sharp from 'sharp'
-import { Request, Response, NextFunction } from 'express'
 
 // eslint-disable-next-line no-useless-escape
 export const phoneRegExp = /^(\+\d{1,4})?([\d\s()-]+)$/
