@@ -34,12 +34,7 @@ export const getOrders = async (
         const normalizedLimit = Math.min(Math.max(Number(limit), 1), 10)
 
         if (status) {
-            if (typeof status === 'object') {
-                Object.assign(filters, status)
-            }
-            if (typeof status === 'string') {
-                filters.status = status
-            }
+            filters.status = status;
         }
 
         if (totalAmountFrom) {
@@ -88,8 +83,8 @@ export const getOrders = async (
                     as: 'customer',
                 },
             },
-            { $unwind: '$customer' },
-            { $unwind: '$products' },
+            { $unwind: { path: '$customer', preserveNullAndEmptyArrays: true } },
+            { $unwind: { path: '$products', preserveNullAndEmptyArrays: true } },
         ]
 
         if (search) {
@@ -101,12 +96,6 @@ export const getOrders = async (
             if (!Number.isNaN(searchNumber)) {
                 searchConditions.push({ orderNumber: searchNumber })
             }
-
-            aggregatePipeline.push({
-                $match: {
-                    $or: searchConditions,
-                },
-            })
 
             filters.$or = searchConditions
         }
