@@ -15,8 +15,8 @@ const { PORT = 3000, ORIGIN_ALLOW = 'http://localhost:5173' } = process.env
 
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 50,
-    message: 'Слишком много запросов с вашего IP, попробуйте снова позже.',
+    max: 100,
+    message: 'Too many req.',
 });
 
 const app = express()
