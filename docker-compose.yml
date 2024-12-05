@@ -2,8 +2,10 @@ services:
   frontend:
     build:
       context: frontend
-    env_file:
-      - frontend/.env
+    environment:
+      - VITE_API_URL=http://localhost/api
+    depends_on:
+      - backend
     volumes:
       - frontend:/app/frontend/dist
 
