@@ -1,12 +1,12 @@
-import { Request } from 'express'
-import multer, { FileFilterCallback } from 'multer'
-import { join } from 'path'
-import { v4 as uuidv4 } from 'uuid' 
+import { Request } from 'express';
+import multer, { FileFilterCallback } from 'multer';
+import { join } from 'path';
+import fs from 'fs';
+import crypto from 'crypto';
 
-type DestinationCallback = (error: Error | null, destination: string) => void
-type FileNameCallback = (error: Error | null, filename: string) => void
+type DestinationCallback = (error: Error | null, destination: string) => void;
+type FileNameCallback = (error: Error | null, filename: string) => void;
 
-// Ограничения на размер файла
 export const fileSizeLimits = {
     // Минимальный размер файла 2KB
     minFileSize: 2048,  // 2 KB
@@ -20,15 +20,21 @@ const storage = multer.diskStorage({
         _file: Express.Multer.File,
         cb: DestinationCallback
     ) => {
-        cb(
-            null,
-            join(
-                __dirname,
-                process.env.UPLOAD_PATH_TEMP
-                    ? `../public/${process.env.UPLOAD_PATH_TEMP}`
-                    : '../public'
-            )
-        )
+        const destinationPath = join(
+            __dirname,
+            process.env.UPLOAD_PATH_TEMP
+                ? `../public/${process.env.UPLOAD_PATH_TEMP}`
+                : '../public'
+        );
+
+        console.log('Destination Path:', destinationPath);
+
+        if (!fs.existsSync(destinationPath)) {
+            fs.mkdirSync(destinationPath, { recursive: true });
+            console.log(`Directory created: ${destinationPath}`);
+        }
+
+        cb(null, destinationPath);
     },
 
     filename: (
@@ -36,10 +42,10 @@ const storage = multer.diskStorage({
         file: Express.Multer.File,
         cb: FileNameCallback
     ) => {
-        const uniqueName = `${uuidv4()}${file.originalname.substring(file.originalname.lastIndexOf('.'))}`;
-        cb(null, uniqueName)
+        const uniqueName = crypto.randomBytes(5).toString('hex');
+        cb(null, `${uniqueName}${file.originalname}`);
     },
-})
+});
 
 const types = [
     'image/png',
@@ -47,25 +53,26 @@ const types = [
     'image/jpeg',
     'image/gif',
     'image/svg+xml',
-]
+];
 
 const fileFilter = (
     _req: Request,
     file: Express.Multer.File,
     cb: FileFilterCallback
 ) => {
+    console.log('File type:', file.mimetype);
+
     if (!types.includes(file.mimetype)) {
-        return cb(null, false)
+        return cb(null, false);
     }
 
     if (file.size < fileSizeLimits.minFileSize) {
         return cb(null, false)
     }
 
-    return cb(null, true)
-}
+    return cb(null, true);
+};
 
 export default multer({ storage, fileFilter, limits: {
     fileSize: fileSizeLimits.maxFileSize
 }})
-

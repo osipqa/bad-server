@@ -135,33 +135,3 @@ export const validateAuthentication = celebrate({
         }),
     }),
 })
-
-export const fileValidation = (req: Request, res: Response, next: NextFunction) => {
-    if (!req.file) {
-      return res.status(400).json({ error: 'Файл не был загружен' })
-    }
-  
-    const allowedMimeTypes = ['image/png', 'image/jpeg']
-
-    const fileMimeType = req.file.mimetype
-    if (!allowedMimeTypes.includes(fileMimeType)) {
-      return res.status(400).json({ error: 'Неверный формат файла. Допустимые форматы: PNG, JPEG' })
-    }
-  
-    sharp(req.file.buffer)
-      .metadata()
-      .then((metadata) => {
-        const maxWidth = 25
-        const maxHeight = 25
-        const width = metadata.width ?? 0
-        const height = metadata.height ?? 0
-        if (width > maxWidth || height > maxHeight) {
-          return res.status(400).json({ error: `Изображение слишком большое. Максимальные размеры: ${maxWidth}x${maxHeight}` })
-        }
-  
-        next()
-      })
-      .catch(() => {
-        return res.status(400).json({ error: 'Ошибка при обработке изображения' })
-      })
-  }
