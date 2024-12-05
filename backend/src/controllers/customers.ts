@@ -3,6 +3,7 @@ import { FilterQuery } from 'mongoose'
 import NotFoundError from '../errors/not-found-error'
 import Order from '../models/order'
 import User, { IUser } from '../models/user'
+import escapeRegExp from '../utils/escapeRegExp'
 
 // TODO: Добавить guard admin
 // eslint-disable-next-line max-len
@@ -29,70 +30,68 @@ export const getCustomers = async (
             search,
         } = req.query
 
+        const normalizedLimit = Math.min(Math.max(Number(limit), 1), 10)
+
         const filters: FilterQuery<Partial<IUser>> = {}
 
+        const parseDate = (dateString: string) => {
+            const date = new Date(dateString);
+            return isNaN(date.getTime()) ? null : date;
+        };
+
         if (registrationDateFrom) {
-            filters.createdAt = {
-                ...filters.createdAt,
-                $gte: new Date(registrationDateFrom as string),
-            }
+            const fromDate = parseDate(registrationDateFrom as string);
+            if (fromDate) filters.createdAt = { ...filters.createdAt, $gte: fromDate };
         }
 
         if (registrationDateTo) {
-            const endOfDay = new Date(registrationDateTo as string)
-            endOfDay.setHours(23, 59, 59, 999)
-            filters.createdAt = {
-                ...filters.createdAt,
-                $lte: endOfDay,
+            const toDate = parseDate(registrationDateTo as string);
+            if (toDate) {
+                toDate.setHours(23, 59, 59, 999);
+                filters.createdAt = { ...filters.createdAt, $lte: toDate };
             }
         }
 
         if (lastOrderDateFrom) {
-            filters.lastOrderDate = {
-                ...filters.lastOrderDate,
-                $gte: new Date(lastOrderDateFrom as string),
-            }
+            const fromDate = parseDate(lastOrderDateFrom as string);
+            if (fromDate) filters.lastOrderDate = { ...filters.lastOrderDate, $gte: fromDate };
         }
 
         if (lastOrderDateTo) {
-            const endOfDay = new Date(lastOrderDateTo as string)
-            endOfDay.setHours(23, 59, 59, 999)
-            filters.lastOrderDate = {
-                ...filters.lastOrderDate,
-                $lte: endOfDay,
+            const toDate = parseDate(lastOrderDateTo as string);
+            if (toDate) {
+                toDate.setHours(23, 59, 59, 999);
+                filters.lastOrderDate = { ...filters.lastOrderDate, $lte: toDate };
             }
         }
 
+        const parseNumber = (value: string) => {
+            const parsed = Number(value);
+            return isNaN(parsed) ? null : parsed;
+        };
+
         if (totalAmountFrom) {
-            filters.totalAmount = {
-                ...filters.totalAmount,
-                $gte: Number(totalAmountFrom),
-            }
+            const amount = parseNumber(totalAmountFrom as string);
+            if (amount) filters.totalAmount = { ...filters.totalAmount, $gte: amount };
         }
 
         if (totalAmountTo) {
-            filters.totalAmount = {
-                ...filters.totalAmount,
-                $lte: Number(totalAmountTo),
-            }
+            const amount = parseNumber(totalAmountTo as string);
+            if (amount) filters.totalAmount = { ...filters.totalAmount, $lte: amount };
         }
 
         if (orderCountFrom) {
-            filters.orderCount = {
-                ...filters.orderCount,
-                $gte: Number(orderCountFrom),
-            }
+            const count = parseNumber(orderCountFrom as string);
+            if (count) filters.orderCount = { ...filters.orderCount, $gte: count };
         }
 
         if (orderCountTo) {
-            filters.orderCount = {
-                ...filters.orderCount,
-                $lte: Number(orderCountTo),
-            }
+            const count = parseNumber(orderCountTo as string);
+            if (count) filters.orderCount = { ...filters.orderCount, $lte: count };
         }
-
+        
         if (search) {
-            const searchRegex = new RegExp(search as string, 'i')
+            const searchRegex = new RegExp(escapeRegExp(search as string), 'i')
             const orders = await Order.find(
                 {
                     $or: [{ deliveryAddress: searchRegex }],
@@ -116,8 +115,8 @@ export const getCustomers = async (
 
         const options = {
             sort,
-            skip: (Number(page) - 1) * Number(limit),
-            limit: Number(limit),
+            skip: (Number(page) - 1) * normalizedLimit,
+            limit: normalizedLimit,
         }
 
         const users = await User.find(filters, null, options).populate([
@@ -137,7 +136,7 @@ export const getCustomers = async (
         ])
 
         const totalUsers = await User.countDocuments(filters)
-        const totalPages = Math.ceil(totalUsers / Number(limit))
+        const totalPages = Math.ceil(totalUsers / normalizedLimit )
 
         res.status(200).json({
             customers: users,
@@ -145,7 +144,7 @@ export const getCustomers = async (
                 totalUsers,
                 totalPages,
                 currentPage: Number(page),
-                pageSize: Number(limit),
+                pageSize: normalizedLimit,
             },
         })
     } catch (error) {
