@@ -13,4 +13,3 @@ docker compose up -d
 6. Админка находится по адресу http://localhost/admin/
 
 Моя работа: https://github.com/osipqa/bad-server
-Сергей, 6 когорта, фулл-стек.
