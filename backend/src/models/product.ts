@@ -47,8 +47,6 @@ const cardsSchema = new mongoose.Schema<IProduct>(
     { versionKey: false }
 )
 
-cardsSchema.index({ title: 'text' })
-
 // Можно лучше: удалять старое изображением перед обновлением сущности
 cardsSchema.pre('findOneAndUpdate', async function deleteOldImage() {
     // @ts-ignore

@@ -1,9 +1,17 @@
-import { Request, Express } from 'express'
+import { Request } from 'express'
 import multer, { FileFilterCallback } from 'multer'
 import { join } from 'path'
 
 type DestinationCallback = (error: Error | null, destination: string) => void
 type FileNameCallback = (error: Error | null, filename: string) => void
+
+// Ограничения на размер файла
+export const fileSizeLimits = {
+    // Минимальный размер файла 2KB
+    minFileSize: 2048,  // 2 KB
+    // Максимальный размер файла 10MB
+    maxFileSize: 10485760,  // 10 MB
+}
 
 const storage = multer.diskStorage({
     destination: (
@@ -48,7 +56,13 @@ const fileFilter = (
         return cb(null, false)
     }
 
-    return cb(null, true)
+    if (file.size < fileSizeLimits.minFileSize) {
+        return cb(null, false)
+    }
+
+    cb(null, true)
 }
 
-export default multer({ storage, fileFilter })
+export default multer({ storage, fileFilter, limits: {
+    fileSize: fileSizeLimits.maxFileSize
+}})
