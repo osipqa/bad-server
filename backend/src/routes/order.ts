@@ -16,7 +16,7 @@ import { routes } from './config'
 const orderRouter = Router()
 
 orderRouter.post(routes.Orders.path, auth, validateOrderBody, createOrder)
-orderRouter.get(routes.OrdersAll.path, auth, getOrders)
+orderRouter.get(routes.OrdersAll.path, auth, roleGuardMiddleware(Role.Admin), getOrders)
 orderRouter.get(routes.OrdersAllMe.path, auth, getOrdersCurrentUser)
 orderRouter.get(
     routes.OrderByNumber.path,
