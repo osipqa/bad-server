@@ -8,7 +8,14 @@ export function validateImage(
 ): void {
 
     if (!req.file) {
-        res.status(400).json();
+        res.status(400).json({ error: 'No file uploaded' })
+        return
+    }
+
+    const fileSize = req.file.size
+    const minFileSize = 2048 // 2 KB
+    if (fileSize < minFileSize) {
+        res.status(400).json({ error: `File size is too small. Minimum is ${minFileSize} bytes.` })
         return
     }
 
