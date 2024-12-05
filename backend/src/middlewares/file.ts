@@ -8,9 +8,7 @@ type DestinationCallback = (error: Error | null, destination: string) => void;
 type FileNameCallback = (error: Error | null, filename: string) => void;
 
 export const fileSizeLimits = {
-    // Минимальный размер файла 2KB
     minFileSize: 2048,  // 2 KB
-    // Максимальный размер файла 10MB
     maxFileSize: 10485760,  // 10 MB
 }
 
